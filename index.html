@@ -179,13 +179,13 @@ a.sec{display:grid;place-items:center;text-decoration:none;min-height:48px;borde
   <!-- ETAPA 3 -->
   <section id="e3" hidden aria-labelledby="t3">
     <h1 id="t3">Confira e envie</h1>
-    <p class="sub">Esta imagem vai junto com a mensagem no WhatsApp.</p>
+    <p class="sub">Sua selfie e o resumo seguem para o Grupo F.B-TX, e o WhatsApp abre com a mensagem pronta.</p>
     <img class="pre" id="pre" alt="Cartão do pedido com sua selfie">
-    <div class="aviso warn" style="margin-top:14px"><b>Importante:</b> o pedido só chega ao Grupo F.B-TX depois que você <b>escolher o contato <span id="numTxt"></span></b> no WhatsApp e tocar em enviar.</div>
-    <button class="cta" id="enviar" type="button">Enviar pelo WhatsApp</button>
+    <div class="aviso warn" style="margin-top:14px"><b>Importante:</b> ao tocar no botão, enviamos a selfie e abrimos o WhatsApp do <b><span id="numTxt"></span></b> com a mensagem pronta. Falta só tocar em <b>enviar</b> lá.</div>
+    <button class="cta" id="enviar" type="button">Enviar selfie e abrir o WhatsApp</button>
     <div id="status" aria-live="polite"></div>
     <details id="planoB">
-      <summary>O WhatsApp não abriu? Use este caminho</summary>
+      <summary>Não deu certo? Use este caminho</summary>
       <div class="btns">
         <a class="sec" id="baixar" href="#" download="pedido-fbtx.jpg">1. Salvar a foto do pedido</a>
         <a class="sec" id="abrirZap" href="#" target="_blank" rel="noopener">2. Abrir o WhatsApp com a mensagem</a>
@@ -198,7 +198,7 @@ a.sec{display:grid;place-items:center;text-decoration:none;min-height:48px;borde
   <div class="rodape">
     <b>GRUPO F.B-TX EMPRÉSTIMOS</b> · atendimento <span id="numRod"></span><br>
     Empréstimos sujeitos à aprovação de crédito. Prazos de 4 a 10 parcelas quinzenais.<br>
-    Seus dados e a selfie seguem só para o WhatsApp do Grupo. Este site não grava nada.
+    A selfie e o resumo do pedido (nome, valor e parcelas) são enviados com segurança ao Grupo F.B-TX para análise. CPF e chave Pix seguem só pela mensagem do WhatsApp.
   </div>
 </div>
 
@@ -211,7 +211,10 @@ const CFG = {
   min: 500, max: 50000, passo: 100,
   nMin: 4, nMax: 10, nPadrao: 6, valorPadrao: 5000,
   intervaloDias: 15,
-  mostrarCustoEfetivo: true  // mostra o custo real por quinzena; coloque false para esconder
+  mostrarCustoEfetivo: true, // mostra o custo real por quinzena; coloque false para esconder
+  /* cofre de pedidos (Supabase): a selfie e o resumo vão para o aplicativo do administrador. Chave pública, só consegue ENVIAR. */
+  cofreUrl: 'https://lvykpuzvexlerjqxsgor.supabase.co',
+  cofreChave: 'sb_publishable_Hx3uhBlWDz_fi21Su3HabA_oDsJkulj'
 };
 
 const $ = id => document.getElementById(id);
@@ -320,7 +323,7 @@ async function tirarFoto() {
   c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
   c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
   const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.86));
-  S.selfie = c; S.selfieAt = new Date(); if (S.selfieURL) URL.revokeObjectURL(S.selfieURL); S.selfieURL = URL.createObjectURL(blob);
+  S.selfie = c; S.selfieAt = new Date(); S.codigo = null; S.subiu = false; S.registrou = false; if (S.selfieURL) URL.revokeObjectURL(S.selfieURL); S.selfieURL = URL.createObjectURL(blob);
   $('shotImg').src = S.selfieURL; fecharCamera(); modoFoto('feito'); erro('eFoto', null, '');
 }
 $('btCam').addEventListener('click', () => { const m = $('shot').dataset.modo; if (m === 'live') tirarFoto(); else abrirCamera(); });
@@ -335,7 +338,7 @@ function textoMensagem() {
   return ['*SOLICITAÇÃO DE EMPRÉSTIMO*', 'Cliente: ' + d.nome, 'CPF: ' + d.cpf, 'WhatsApp: ' + d.zap, 'Chave Pix: ' + d.pix, '',
     'Valor solicitado: ' + BRL(c.v), 'Parcelas: ' + c.n + 'x quinzenais', 'Valor de cada parcela: ' + BRL(c.parcela),
     'Taxa: ' + (CFG.taxa * 100).toFixed(2).replace('.', ',') + '% por quinzena', 'Total a pagar: ' + BRL(c.total), '1º vencimento: ' + d.primeiro, '',
-    'Selfie ao vivo em anexo, tirada em ' + (S.selfieAt || new Date()).toLocaleString('pt-BR') + '. Pedido feito pelo link de simulação em ' + new Date().toLocaleString('pt-BR') + '.'].join('\n');
+    (S.codigo ? 'Selfie ao vivo enviada com sucesso ao aplicativo do Grupo (código ' + S.codigo + '), tirada em ' : 'Selfie ao vivo em anexo, tirada em ') + (S.selfieAt || new Date()).toLocaleString('pt-BR') + '. Pedido feito pelo link de simulação em ' + new Date().toLocaleString('pt-BR') + '.'].join('\n');
 }
 function arredondado(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 async function montarCartao() {
@@ -373,7 +376,44 @@ async function revisar() {
   } catch (e) { erro('eFoto', null, 'Algo deu errado ao montar a imagem. Tire a selfie de novo.'); }
   bt.disabled = false; bt.textContent = 'Revisar e enviar →';
 }
+function novoCodigo() {
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(6); crypto.getRandomValues(b);
+  return 'F-' + Array.from(b, x => A[x % A.length]).join('');
+}
+async function enviarAoCofre(d) {
+  const U = CFG.cofreUrl, K = CFG.cofreChave, H = { apikey: K, Authorization: 'Bearer ' + K };
+  if (!S.codigo) S.codigo = novoCodigo();
+  if (!S.subiu) {
+    const c = S.selfie, blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.85));
+    const up = await fetch(U + '/storage/v1/object/selfies/' + S.codigo + '.jpg', { method: 'POST', headers: { ...H, 'Content-Type': 'image/jpeg', 'x-upsert': 'false' }, body: blob });
+    if (!up.ok && up.status !== 409) throw new Error('foto ' + up.status);
+    S.subiu = true;
+  }
+  if (!S.registrou) {
+    const c = d.c, r = await fetch(U + '/rest/v1/pedidos', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ codigo: S.codigo, nome: d.nome, valor: c.v, parcelas: c.n, parcela: c.parcela, total: c.total, taxa: CFG.taxa, primeiro_venc: d.primeiro, selfie_path: S.codigo + '.jpg', selfie_em: (S.selfieAt || new Date()).toISOString() }) });
+    if (!r.ok && r.status !== 409) throw new Error('pedido ' + r.status);
+    S.registrou = true;
+  }
+}
 async function enviar() {
+  const st = $('status'), bt = $('enviar'), d = dadosPedido();
+  bt.disabled = true; bt.textContent = 'Enviando a selfie…'; st.innerHTML = '';
+  try {
+    await Promise.race([enviarAoCofre(d), new Promise((_, no) => setTimeout(() => no(new Error('tempo')), 25000))]);
+    const url = 'https://wa.me/' + CFG.whats + '?text=' + encodeURIComponent(textoMensagem());
+    $('abrirZap').href = url;
+    st.innerHTML = '<div class="aviso">✓ <b>Selfie enviada com sucesso</b> (código ' + S.codigo + '). Abrindo o WhatsApp com a mensagem pronta. Se não abrir, <a href="' + url + '" style="color:#ffd21f;font-weight:700">toque aqui</a>. Depois é só tocar em <b>enviar</b>.</div>';
+    bt.textContent = 'Abrir o WhatsApp de novo'; bt.disabled = false; bt.onclick = () => { location.href = url; };
+    setTimeout(() => { location.href = url; }, 900);
+    return;
+  } catch (e) {
+    bt.disabled = false; bt.textContent = 'Tentar enviar de novo';
+    st.innerHTML = '<div class="aviso warn">Não consegui enviar a selfie agora (verifique a internet). Toque em <b>Tentar enviar de novo</b>. Se não funcionar, use o caminho abaixo.</div>';
+    $('planoB').open = true;
+  }
+}
+async function enviarPeloCompartilhar() {
   const st = $('status'), texto = textoMensagem(), d = dadosPedido();
   try { await navigator.clipboard.writeText(texto); } catch (e) {}
   const file = new File([S.card], nomeArquivo(d), { type: 'image/jpeg' });
@@ -398,7 +438,7 @@ $('avanca1').addEventListener('click', () => { const c = calc(S.valor, S.n); $('
 $('volta2').addEventListener('click', () => ir(1));
 $('volta3').addEventListener('click', () => ir(2));
 $('avanca2').addEventListener('click', revisar);
-$('enviar').addEventListener('click', enviar);
+$('enviar').addEventListener('click', () => { if ($('enviar').onclick) return; enviar(); });
 </script>
 </body>
 </html>
