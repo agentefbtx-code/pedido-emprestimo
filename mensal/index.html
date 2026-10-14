@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulação Mensal F.B-TX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: uma coluna estreita, pensada para o celular; três etapas (simular, dados + selfie, enviar). Preto e amarelo, como pedido. */
+:root{
+  --bg:#0b0b0c; --panel:#141416; --panel-2:#1b1b1e; --line:#2a2a2e;
+  --fg:#f5f3ea; --muted:#a09d92; --gold:#ffd21f; --gold-ink:#1a1500;
+  --ok:#3ddc84; --err:#ff6b5e;
+  --display:'Archivo','Arial Black',system-ui,sans-serif; --body:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);min-height:100%}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+header.top{display:flex;align-items:center;gap:12px;padding-block:16px;border-bottom:1px solid var(--line)}
+.logo{width:42px;height:42px;border-radius:11px;background:var(--gold);color:var(--gold-ink);display:grid;place-items:center;font:800 19px var(--display);flex:none}
+.brand{min-width:0;flex:1}
+.brand b{display:block;font:800 17px/1.1 var(--display);letter-spacing:.01em}
+.brand span{font-size:12.5px;color:var(--muted)}
+.zap{flex:none;font-size:12.5px;font-weight:600;color:var(--ok);border:1px solid #1f5a3a;background:#0e2318;border-radius:99px;padding:6px 11px;text-decoration:none;white-space:nowrap}
+ol.steps{list-style:none;display:flex;gap:6px;margin:20px 0 6px;padding:0}
+ol.steps li{flex:1;text-align:center;font-size:12px;color:var(--muted);position:relative;padding-top:30px}
+ol.steps li::before{content:attr(data-n);position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line);display:grid;place-items:center;font:700 12px var(--body);color:var(--muted)}
+ol.steps li::after{content:"";position:absolute;top:12px;left:calc(50% + 18px);right:calc(-50% + 18px);height:2px;background:var(--line)}
+ol.steps li:last-child::after{display:none}
+ol.steps li.on{color:var(--fg);font-weight:600}
+ol.steps li.on::before{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+ol.steps li.done::before{content:"✓";background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+ol.steps li.done::after{background:var(--gold)}
+h1{font:800 clamp(26px,7vw,34px)/1.1 var(--display);margin:22px 0 6px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.lab{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.big{white-space:nowrap;font:800 32px/1 var(--display);color:var(--gold);font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:6px;background:var(--line);margin:18px 0 8px;outline-offset:6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--gold);border:4px solid var(--panel);box-shadow:0 0 0 2px var(--gold)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--gold);border:4px solid var(--panel);box-shadow:0 0 0 2px var(--gold)}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chips,.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip,.opt{border:1px solid var(--line);background:var(--panel-2);color:var(--fg);border-radius:10px;padding:10px 12px;font:600 14px var(--body);cursor:pointer;min-height:44px;font-variant-numeric:tabular-nums}
+.opts .opt{flex:1 1 52px;text-align:center}
+.chip[aria-pressed=true],.opt[aria-pressed=true]{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.chip:focus-visible,.opt:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:2px}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:10px 12px;font-variant-numeric:tabular-nums}
+dt{color:var(--muted)} dd{margin:0;text-align:right;font-weight:600}
+dd.gold{color:var(--gold)}
+.parcela{background:linear-gradient(180deg,#2a2208,#1a1505);border:1px solid #5a4a10;border-radius:14px;text-align:center;padding:16px;margin-top:14px}
+.parcela .lab{color:var(--gold)}
+.parcela .big{display:block;font-size:38px;margin-top:6px}
+.parcela small{color:var(--muted)}
+.cron{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:14px;font-variant-numeric:tabular-nums}
+.cron li{display:flex;justify-content:space-between;gap:10px;background:var(--panel-2);border-radius:9px;padding:8px 12px}
+.cron b{color:var(--gold)}
+.mods{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-top:6px}
+.mod{text-align:left;border:1px solid var(--line);background:var(--panel-2);color:var(--fg);border-radius:12px;padding:12px;cursor:pointer;font:inherit;min-height:44px}
+.mod b{display:block;font:700 14px var(--body)}
+.mod small{display:block;color:var(--muted);font-size:12px;line-height:1.35;margin-top:4px}
+.mod[aria-pressed=true]{border-color:var(--gold);background:#1e1a08}
+.mod[aria-pressed=true] b{color:var(--gold)}
+@media (max-width:420px){.mods{grid-template-columns:1fr}}
+.nota{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.cet{margin-top:12px;font-size:13px;color:var(--fg);background:var(--panel-2);border-radius:10px;padding:10px 12px}
+.cet b{color:var(--gold)}
+button.cta{width:100%;min-height:54px;border:0;border-radius:14px;background:var(--gold);color:var(--gold-ink);font:800 16px var(--display);letter-spacing:.02em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 24px rgba(255,210,31,.18)}
+button.cta:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+button.sec{min-height:48px;border:1px solid var(--line);background:var(--panel-2);color:var(--fg);border-radius:12px;font:600 15px var(--body);cursor:pointer;padding:0 16px}
+.btns{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:6px}
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field label{font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.field input[type=text],.field input[type=tel],.field input[type=search]{width:100%;min-height:50px;border-radius:12px;border:1px solid var(--line);background:#0e0e10;color:var(--fg);font:16px var(--body);padding:0 14px}
+.field input[aria-invalid=true]{border-color:var(--err)}
+.err{color:var(--err);font-size:13px;min-height:0;margin:0}
+.two{display:grid;grid-template-columns:1fr;gap:0 12px}
+@media (min-width:520px){.two{grid-template-columns:1fr 1fr}}
+.selfie{display:grid;place-items:center;gap:12px;text-align:center}
+.shot{width:min(240px,68vw);aspect-ratio:1;border-radius:50%;border:3px dashed #5a4a10;background:var(--panel-2);display:grid;place-items:center;overflow:hidden;color:var(--muted);font-size:14px;padding:18px}
+.shot img,.shot video{width:100%;height:100%;object-fit:cover;display:block}
+.shot video{transform:scaleX(-1)}
+.shot.live{border-style:solid;border-color:var(--gold);padding:0}
+.shot.has{border-style:solid;border-color:var(--gold);padding:0}
+.shot svg{width:46px;height:46px;stroke:var(--gold);fill:none;stroke-width:1.6;margin-bottom:6px}
+.dicas{font-size:13px;color:var(--muted);margin:0}
+.check{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;color:var(--muted);margin:6px 0 16px}
+.check input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--gold);flex:none}
+.pre{display:block;width:100%;border-radius:14px;border:1px solid var(--line);background:#000}
+.aviso{border-radius:12px;padding:12px 14px;font-size:14px;margin:12px 0;background:#10231a;border:1px solid #1f5a3a;color:#c8f5dc}
+.aviso.warn{background:#2a2108;border-color:#5a4a10;color:#ffe9a3}
+details{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel)}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details .btns{grid-template-columns:1fr;margin-top:12px}
+a.sec{display:grid;place-items:center;text-decoration:none;min-height:48px;border:1px solid var(--line);background:var(--panel-2);color:var(--fg);border-radius:12px;font:600 15px var(--body);padding:0 16px;text-align:center}
+.rodape{margin-top:26px;border-top:1px solid var(--line);padding-top:18px;font-size:12.5px;color:var(--muted);text-align:center}
+.rodape b{color:var(--fg)}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:no-preference){.card,.parcela{animation:subir .25s ease both}@keyframes subir{from{opacity:.0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true">FB</div>
+    <div class="brand"><b>GRUPO F.B-TX</b><span>Empréstimos · crédito rápido e transparente</span></div>
+    <a class="zap" id="zapTop" href="#" target="_blank" rel="noopener">WhatsApp</a>
+  </header>
+
+  <ol class="steps" aria-label="Etapas">
+    <li data-n="1" id="s1" class="on">Simulação</li>
+    <li data-n="2" id="s2">Seus dados</li>
+    <li data-n="3" id="s3">Enviar</li>
+  </ol>
+
+  <!-- ETAPA 1 -->
+  <section id="e1" aria-labelledby="t1">
+    <h1 id="t1">Quanto você precisa hoje?</h1>
+    <p class="sub">Simule com parcelas mensais. Sem compromisso.</p>
+
+    <div class="card">
+      <div class="row"><span class="lab">Valor do empréstimo</span><span class="big" id="valorTxt">R$ 5.000</span></div>
+      <input type="range" id="valor" aria-label="Valor do empréstimo" min="500" max="50000" step="100" value="5000">
+      <div class="ends"><span id="vMin"></span><span id="vMax"></span></div>
+      <div class="chips" id="chips"></div>
+
+      <hr>
+      <span class="lab">Modalidade de pagamento</span>
+      <div class="mods" id="mods" role="group" aria-label="Modalidade de pagamento">
+        <button type="button" class="mod" data-t="padrao" aria-pressed="true"><b>Parcelado padrão</b><small>Parcelas mensais fixas de 1x a 8x (principal + juros de <span id="txPad"></span> ao mês).</small></button>
+        <button type="button" class="mod" data-t="so_juros" aria-pressed="false"><b>Pagar só juros (renovação)</b><small>De 2x a 6x: paga só os juros de <span id="txJur"></span> ao mês até a penúltima parcela. Na última: principal + juros.</small></button>
+      </div>
+      <div class="row" style="margin-top:16px"><span class="lab" id="nLab">Parcelas mensais</span><span class="big" id="nTxt" style="font-size:24px">3x</span></div>
+      <div class="opts" id="opts" role="group" aria-label="Quantidade de parcelas"></div>
+      <p class="nota" id="notaPrazo">Os vencimentos acontecem de mês em mês.</p>
+    </div>
+
+    <div class="card">
+      <span class="lab">Resumo da simulação</span>
+      <dl style="margin-top:12px">
+        <dt>Valor solicitado</dt><dd id="rValor"></dd>
+        <dt>Plano</dt><dd id="rPlano"></dd>
+        <dt>Taxa</dt><dd id="rTaxa"></dd>
+        <dt>Juros totais</dt><dd class="gold" id="rJuros"></dd>
+        <dt><b>Total a pagar</b></dt><dd id="rTotal" style="font-size:20px"></dd>
+      </dl>
+      <div class="parcela"><span class="lab" id="rParcelaLab">Valor de cada parcela</span><span class="big" id="rParcela"></span><small id="rParcelaSub">1ª parcela vence 1 mês depois da liberação</small></div>
+      <div class="cet" id="cet" hidden></div>
+      <ul class="cron" id="cron" aria-label="Cronograma das parcelas"></ul>
+      <p class="nota" id="notaDatas">As datas assumem liberação hoje. Se a liberação for outro dia, as datas acompanham.</p>
+    </div>
+    <button class="cta" id="avanca1" type="button">Avançar para meus dados →</button>
+  </section>
+
+  <!-- ETAPA 2 -->
+  <section id="e2" hidden aria-labelledby="t2">
+    <h1 id="t2">Seus dados e uma selfie</h1>
+    <p class="sub">Pedido de <b id="e2valor" style="color:var(--gold)"></b> em <span id="e2plano"></span>.</p>
+    <div class="card">
+      <div class="field"><label for="nome">Nome completo</label><input type="text" id="nome" autocomplete="name" placeholder="Como está no seu documento"><p class="err" id="eNome"></p></div>
+      <div class="two">
+        <div class="field"><label for="cpf">CPF</label><input type="tel" id="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"><p class="err" id="eCpf"></p></div>
+        <div class="field"><label for="zap">WhatsApp</label><input type="tel" id="zap" inputmode="tel" autocomplete="tel-national" placeholder="(19) 99999-9999" maxlength="15"><p class="err" id="eZap"></p></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="pix">Chave Pix para receber o crédito</label><input type="text" id="pix" autocomplete="off" placeholder="CPF, e-mail, telefone ou aleatória"><p class="err" id="ePix"></p></div>
+        <div class="field"><label for="banco">Nome do banco</label><input type="text" id="banco" autocomplete="off" placeholder="Ex.: Nubank, Itaú, Bradesco"><p class="err" id="eBanco"></p></div>
+      </div>
+    </div>
+
+    <div class="card selfie">
+      <span class="lab" style="justify-self:start">Selfie</span>
+      <div class="shot" id="shot" data-modo="vazio">
+        <video id="video" playsinline muted autoplay hidden></video>
+        <img id="shotImg" alt="Sua selfie" hidden>
+        <span id="shotVazio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg><br>A câmera da frente abre aqui</span>
+      </div>
+      <button class="cta" type="button" id="btCam" style="min-height:50px">Abrir a câmera</button>
+      <p class="dicas" id="dicaFoto">A selfie precisa ser tirada agora, ao vivo. Não aceita foto da galeria. Rosto inteiro, boa luz, sem óculos escuros nem boné.</p>
+      <p class="err" id="eFoto"></p>
+    </div>
+
+    <label class="check"><input type="checkbox" id="ok"><span>Confirmo que os dados são verdadeiros e autorizo o Grupo F.B-TX a usar meus dados e minha selfie para analisar este pedido.</span></label>
+    <p class="err" id="eOk"></p>
+    <div class="btns"><button class="sec" type="button" id="volta2">Voltar</button><button class="cta" type="button" id="avanca2">Revisar e enviar →</button></div>
+  </section>
+
+  <!-- ETAPA 3 -->
+  <section id="e3" hidden aria-labelledby="t3">
+    <h1 id="t3">Confira e envie</h1>
+    <p class="sub">Sua selfie e o resumo seguem para o Grupo F.B-TX, e o WhatsApp abre com a mensagem pronta.</p>
+    <img class="pre" id="pre" alt="Cartão do pedido com sua selfie">
+    <div class="aviso warn" style="margin-top:14px"><b>Importante:</b> ao tocar no botão, enviamos a selfie e abrimos o WhatsApp do <b><span id="numTxt"></span></b> com a mensagem pronta. Falta só tocar em <b>enviar</b> lá.</div>
+    <button class="cta" id="enviar" type="button">Enviar selfie e abrir o WhatsApp</button>
+    <div id="status" aria-live="polite"></div>
+    <details id="planoB">
+      <summary>Não deu certo? Use este caminho</summary>
+      <div class="btns">
+        <a class="sec" id="baixar" href="#" download="pedido-fbtx.jpg">1. Salvar a foto do pedido</a>
+        <a class="sec" id="abrirZap" href="#" target="_blank" rel="noopener">2. Abrir o WhatsApp com a mensagem</a>
+      </div>
+      <p class="nota">No passo 2, a mensagem já vem escrita. Toque no clipe, anexe a foto salva no passo 1 e envie.</p>
+    </details>
+    <div class="btns" style="margin-top:14px"><button class="sec" type="button" id="volta3">Voltar</button></div>
+  </section>
+
+  <div class="rodape">
+    <b>GRUPO F.B-TX EMPRÉSTIMOS</b> · atendimento <span id="numRod"></span><br>
+    Empréstimos sujeitos à aprovação de crédito. Prazos de 1 a 8 parcelas mensais (renovação: 2 a 6).<br>
+    A selfie e o resumo do pedido (nome, valor e parcelas) são enviados com segurança ao Grupo F.B-TX para análise. CPF e chave Pix seguem só pela mensagem do WhatsApp.
+  </div>
+</div>
+
+<script>
+/* ===== AJUSTES DO NEGÓCIO (edite só aqui) ===== */
+const CFG = {
+  taxaPadrao: 0.18,          // ao mês, juros simples sobre o valor total (parcelado padrão)
+  taxaJuros: 0.19,           // ao mês, modalidade "pagar só juros" (renovação)
+  whats: '5519999894970',    // WhatsApp que recebe o pedido, com 55 + DDD
+  whatsFmt: '(19) 99989-4970',
+  min: 1000, max: 15000, passo: 500,
+  nMin: 1, nMax: 8, nPadrao: 3, jMin: 2, jMax: 6, valorPadrao: 5000,
+  mostrarCustoEfetivo: true, // mostra o custo real por mês; coloque false para esconder
+  /* cofre de pedidos (Supabase): a selfie e o resumo vão para o aplicativo do administrador. Chave pública, só consegue ENVIAR. */
+  cofreUrl: 'https://lvykpuzvexlerjqxsgor.supabase.co',
+  cofreChave: 'sb_publishable_Hx3uhBlWDz_fi21Su3HabA_oDsJkulj'
+};
+
+const $ = id => document.getElementById(id);
+const BRL = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const BRL0 = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const r2 = v => Math.round(v * 100) / 100;
+const S = { tipo: 'padrao', valor: CFG.valorPadrao, n: CFG.nPadrao, selfie: null, selfieAt: null, selfieURL: '', card: null, cardURL: '' };
+
+/* ---------- cálculo ---------- */
+const PCT = t => (t * 100).toFixed(2).replace('.', ',').replace(',00', '') + '%';
+function calc(v, n, tipo) {
+  if (tipo === 'so_juros') {                       // só juros até a penúltima; na última, principal + juros
+    const jm = r2(v * CFG.taxaJuros), juros = r2(jm * n), total = r2(v + juros), ultima = r2(v + jm);
+    return { tipo, v, n, taxa: CFG.taxaJuros, juros, total, parcela: jm, ultima };
+  }
+  const juros = r2(v * CFG.taxaPadrao * n), total = r2(v + juros), parcela = r2(total / n);
+  return { tipo: 'padrao', v, n, taxa: CFG.taxaPadrao, juros, total, parcela, ultima: r2(total - parcela * (n - 1)) };
+}
+const valorDaParcela = (c, i) => (i === c.n - 1 ? c.ultima : c.parcela);
+function custoEfetivo(c) {            // taxa por mês que iguala o valor recebido às parcelas pagas
+  let lo = 0, hi = 3;
+  for (let i = 0; i < 80; i++) {
+    const r = (lo + hi) / 2; let pv = 0;
+    for (let k = 1; k <= c.n; k++) pv += valorDaParcela(c, k - 1) / Math.pow(1 + r, k);
+    if (pv > c.v) lo = r; else hi = r;
+  }
+  return (lo + hi) / 2;
+}
+const dataBR = d => d.toLocaleDateString('pt-BR');
+function somaMeses(d, k) { const x = new Date(d.getFullYear(), d.getMonth() + k, 1), ult = new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate(); x.setDate(Math.min(d.getDate(), ult)); return x; }
+function agenda(n) { const h = new Date(); return Array.from({ length: n }, (_, i) => somaMeses(h, i + 1)); }
+const nomeModalidade = c => c.tipo === 'so_juros' ? 'Mensal · só juros com quitação final' : 'Mensal · parcelado padrão';
+const faixa = () => S.tipo === 'so_juros' ? [CFG.jMin, CFG.jMax] : [CFG.nMin, CFG.nMax];
+
+/* ---------- etapa 1 ---------- */
+function montarControles() {
+  const chips = [1000, 2000, 3000, 5000, 10000, 15000];
+  $('chips').innerHTML = chips.map(v => `<button type="button" class="chip" data-v="${v}" aria-pressed="false">${BRL0(v)}</button>`).join('');
+  $('vMin').textContent = BRL0(CFG.min); $('vMax').textContent = BRL0(CFG.max); $('txPad').textContent = PCT(CFG.taxaPadrao); $('txJur').textContent = PCT(CFG.taxaJuros);
+  $('chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) { S.valor = +b.dataset.v; $('valor').value = S.valor; desenhar(); } });
+  $('opts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (b) { S.n = +b.dataset.n; desenhar(); } });
+  $('mods').addEventListener('click', e => { const b = e.target.closest('.mod'); if (b) { S.tipo = b.dataset.t; const [a, z] = faixa(); S.n = Math.min(z, Math.max(a, S.n)); desenhar(); } });
+  const sl = $('valor'); sl.min = CFG.min; sl.max = CFG.max; sl.step = CFG.passo; sl.value = S.valor;
+  sl.addEventListener('input', () => { S.valor = +sl.value; desenhar(); });
+}
+function desenhar() {
+  const [a, z] = faixa(); S.n = Math.min(z, Math.max(a, S.n));
+  let h = ''; for (let n = a; n <= z; n++) h += `<button type="button" class="opt" data-n="${n}" aria-pressed="false">${n}x</button>`;
+  $('opts').innerHTML = h;
+  const c = calc(S.valor, S.n, S.tipo), so = c.tipo === 'so_juros';
+  $('valorTxt').textContent = BRL0(c.v); $('nTxt').textContent = c.n + 'x';
+  $('nLab').textContent = so ? 'Parcelamento (só juros + quitação final)' : 'Parcelas mensais';
+  $('notaPrazo').textContent = so ? 'Você paga só os juros todo mês e quita o principal na última parcela.' : 'Os vencimentos acontecem de mês em mês.';
+  document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === S.valor)));
+  document.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.n === S.n)));
+  document.querySelectorAll('.mod').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === S.tipo)));
+  $('rValor').textContent = BRL(c.v); $('rPlano').textContent = so ? c.n + 'x mensais (só juros + quitação)' : c.n + 'x mensais';
+  $('rTaxa').textContent = (c.taxa * 100).toFixed(2).replace('.', ',') + '% ao mês';
+  $('rJuros').textContent = BRL(c.juros); $('rTotal').textContent = BRL(c.total); $('rParcela').textContent = BRL(c.parcela);
+  $('rParcelaLab').textContent = so ? 'Parcela mensal (só juros)' : 'Valor de cada parcela';
+  $('rParcelaSub').textContent = so ? 'Na última parcela: ' + BRL(c.ultima) + ' (principal + juros)' : '1ª parcela vence 1 mês depois da liberação';
+  const ds = agenda(c.n);
+  $('cron').innerHTML = ds.map((d, i) => `<li><span>${i + 1}ª parcela · ${dataBR(d)}${so ? (i === c.n - 1 ? ' · principal + juros' : ' · só juros') : ''}</span><b>${BRL(valorDaParcela(c, i))}</b></li>`).join('');
+  const cet = $('cet');
+  if (CFG.mostrarCustoEfetivo) { const r = custoEfetivo(c); cet.hidden = false; cet.innerHTML = `Custo efetivo deste pedido: <b>${(r * 100).toFixed(1).replace('.', ',')}% ao mês</b>. É o custo real considerando quando cada parcela é paga e o valor que fica emprestado.`; }
+  else cet.hidden = true;
+}
+
+/* ---------- navegação ---------- */
+function ir(n) {
+  if (n !== 2) fecharCamera();
+  ['e1', 'e2', 'e3'].forEach((id, i) => { $(id).hidden = (i + 1) !== n; });
+  ['s1', 's2', 's3'].forEach((id, i) => { const li = $(id); li.className = (i + 1) < n ? 'done' : (i + 1) === n ? 'on' : ''; });
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- etapa 2: máscaras, validação, selfie ---------- */
+const soNum = s => String(s).replace(/\D/g, '');
+$('cpf').addEventListener('input', e => { const d = soNum(e.target.value).slice(0, 11); e.target.value = d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); });
+$('zap').addEventListener('input', e => { const d = soNum(e.target.value).slice(0, 11); e.target.value = d.length > 6 ? d.replace(/(\d{2})(\d{5}|\d{4})(\d{0,4})/, (m, a, b, c) => '(' + a + ') ' + b + (c ? '-' + c : '')) : d.length > 2 ? '(' + d.slice(0, 2) + ') ' + d.slice(2) : d; });
+function cpfOk(c) {
+  c = soNum(c); if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+  const dv = n => { let s = 0; for (let i = 0; i < n; i++) s += +c[i] * (n + 1 - i); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
+  return dv(9) === +c[9] && dv(10) === +c[10];
+}
+function erro(id, campo, msg) { $(id).textContent = msg || ''; if (campo) $(campo).setAttribute('aria-invalid', msg ? 'true' : 'false'); return !msg; }
+function validar() {
+  let primeiro = null; const marca = (ok, el) => { if (!ok && !primeiro) primeiro = el; return ok; };
+  const nome = $('nome').value.trim().replace(/\s+/g, ' ');
+  marca(erro('eNome', 'nome', nome.split(' ').filter(p => p.length > 1).length >= 2 ? '' : 'Digite o nome completo.'), 'nome');
+  marca(erro('eCpf', 'cpf', cpfOk($('cpf').value) ? '' : 'CPF inválido. Confira os números.'), 'cpf');
+  const z = soNum($('zap').value); marca(erro('eZap', 'zap', (z.length === 11 || z.length === 10) ? '' : 'Digite o DDD e o número.'), 'zap');
+  marca(erro('ePix', 'pix', $('pix').value.trim().length >= 5 ? '' : 'Digite a chave Pix.'), 'pix');
+  marca(erro('eFoto', null, S.selfie && $('shot').dataset.modo === 'feito' ? '' : 'Tire a selfie ao vivo para continuar.'), 'shot');
+  marca(erro('eOk', null, $('ok').checked ? '' : 'Marque a confirmação para continuar.'), 'ok');
+  if (primeiro) $(primeiro).scrollIntoView({ block: 'center', behavior: 'smooth' });
+  return !primeiro;
+}
+/* Selfie ao vivo: só a câmera do aparelho (getUserMedia). Não existe seletor de arquivo, então não há como enviar foto da galeria. */
+let stream = null;
+function modoFoto(m) {
+  $('shot').dataset.modo = m; $('shot').classList.toggle('live', m === 'live'); $('shot').classList.toggle('has', m === 'feito');
+  $('video').hidden = m !== 'live'; $('shotImg').hidden = m !== 'feito'; $('shotVazio').hidden = m !== 'vazio';
+  $('btCam').textContent = m === 'live' ? 'Tirar a foto agora' : m === 'feito' ? 'Tirar outra selfie' : 'Abrir a câmera';
+}
+function fecharCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; $('video').srcObject = null; }
+async function abrirCamera() {
+  erro('eFoto', null, '');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { erro('eFoto', null, 'Este navegador não abre a câmera. Abra o link no Chrome (Android) ou no Safari (iPhone), fora de outros aplicativos.'); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+    const v = $('video'); v.srcObject = stream; await v.play(); modoFoto('live');
+  } catch (e) {
+    fecharCamera(); modoFoto(S.selfie ? 'feito' : 'vazio');
+    erro('eFoto', null, e && e.name === 'NotAllowedError' ? 'A câmera está bloqueada. Permita o acesso à câmera nas configurações do navegador e toque de novo.' : e && e.name === 'NotFoundError' ? 'Não encontrei uma câmera neste aparelho.' : 'Não consegui abrir a câmera. Feche outros aplicativos que usam a câmera e tente de novo.');
+  }
+}
+async function tirarFoto() {
+  const v = $('video'); if (!v.videoWidth || v.readyState < 2) { erro('eFoto', null, 'A câmera ainda está abrindo. Espere um instante e toque de novo.'); return; }
+  const k = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight)), c = document.createElement('canvas');
+  c.width = Math.round(v.videoWidth * k); c.height = Math.round(v.videoHeight * k);
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+  const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.86));
+  S.selfie = c; S.selfieAt = new Date(); S.codigo = null; S.subiu = false; S.registrou = false; if (S.selfieURL) URL.revokeObjectURL(S.selfieURL); S.selfieURL = URL.createObjectURL(blob);
+  $('shotImg').src = S.selfieURL; fecharCamera(); modoFoto('feito'); erro('eFoto', null, '');
+}
+$('btCam').addEventListener('click', () => { const m = $('shot').dataset.modo; if (m === 'live') tirarFoto(); else abrirCamera(); });
+
+/* ---------- etapa 3: cartão com a selfie e a mensagem ---------- */
+function dadosPedido() {
+  const c = calc(S.valor, S.n, S.tipo), ds = agenda(c.n);
+  return { c, primeiro: dataBR(ds[0]), nome: $('nome').value.trim().replace(/\s+/g, ' '), cpf: $('cpf').value, zap: $('zap').value, pix: $('pix').value.trim(), banco: $('banco').value.trim() };
+}
+function textoMensagem() {
+  const d = dadosPedido(), c = d.c, so = c.tipo === 'so_juros';
+  return ['*SOLICITAÇÃO DE EMPRÉSTIMO*', 'Cliente: ' + d.nome, 'CPF: ' + d.cpf, 'WhatsApp: ' + d.zap, 'Chave Pix: ' + d.pix + (d.banco ? ' (' + d.banco + ')' : ''), '',
+    'Modalidade: ' + nomeModalidade(c),
+    'Valor solicitado: ' + BRL(c.v), 'Parcelas: ' + c.n + 'x mensais', 'Valor de cada parcela: ' + BRL(c.parcela) + (so ? ' (só juros)' : ''),
+    ...(so ? ['Última parcela: ' + BRL(c.ultima) + ' (principal + juros)'] : []),
+    'Taxa: ' + (c.taxa * 100).toFixed(2).replace('.', ',') + '% ao mês', 'Total a pagar: ' + BRL(c.total), '1º vencimento: ' + d.primeiro, '',
+    (S.codigo ? 'Selfie ao vivo enviada com sucesso ao aplicativo do Grupo (código ' + S.codigo + '), tirada em ' : 'Selfie ao vivo em anexo, tirada em ') + (S.selfieAt || new Date()).toLocaleString('pt-BR') + '. Pedido feito pelo link de simulação mensal em ' + new Date().toLocaleString('pt-BR') + '.'].join('\n');
+}
+function arredondado(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+async function montarCartao() {
+  try { await document.fonts.ready; } catch (e) {}
+  const d = dadosPedido(), c = d.c, W = 1080, H = 1500, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'), F = (w, s, f) => `${w} ${s}px ${f || "'Public Sans',system-ui,Arial,sans-serif"}`, D = "'Archivo','Arial Black',Arial,sans-serif";
+  g.fillStyle = '#0b0b0c'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#ffd21f'; g.fillRect(0, 0, W, 150);
+  g.fillStyle = '#1a1500'; g.font = F(800, 52, D); g.textBaseline = 'middle'; g.fillText('GRUPO F.B-TX', 56, 62); g.font = F(600, 28); g.fillText('SOLICITAÇÃO · MENSAL', 56, 112);
+  const s = 560, sx = (W - s) / 2, sy = 210, im = S.selfie, m = Math.min(im.width, im.height);
+  g.save(); arredondado(g, sx, sy, s, s, 40); g.clip(); g.drawImage(im, (im.width - m) / 2, (im.height - m) / 2 * 0.7, m, m, sx, sy, s, s); g.restore();
+  g.lineWidth = 8; g.strokeStyle = '#ffd21f'; arredondado(g, sx, sy, s, s, 40); g.stroke();
+  g.textAlign = 'center'; g.fillStyle = '#f5f3ea'; g.font = F(800, 50, D);
+  let nome = d.nome; while (g.measureText(nome).width > W - 100 && nome.length > 8) nome = nome.slice(0, -2); if (nome !== d.nome) nome += '…';
+  g.fillText(nome, W / 2, 836);
+  g.textAlign = 'left';
+  const linhas = [['Valor solicitado', BRL(c.v)], ['Plano', c.n + 'x mensais' + (c.tipo === 'so_juros' ? ' · só juros' : '')], [c.tipo === 'so_juros' ? 'Parcela (só juros)' : 'Valor de cada parcela', BRL(c.parcela)], ['Total a pagar', BRL(c.total)], ['1º vencimento', d.primeiro]];
+  let y = 920; g.fillStyle = '#141416'; arredondado(g, 56, y - 28, W - 112, 450, 28); g.fill();
+  linhas.forEach(([a, b], i) => { const yy = y + 36 + i * 84; g.fillStyle = '#a09d92'; g.font = F(500, 32); g.textAlign = 'left'; g.fillText(a, 92, yy); g.fillStyle = i === 3 ? '#ffd21f' : '#f5f3ea'; g.font = F(700, i === 3 ? 44 : 36); g.textAlign = 'right'; g.fillText(b, W - 92, yy); if (i < 4) { g.fillStyle = '#2a2a2e'; g.fillRect(92, yy + 40, W - 184, 2); } });
+  g.textAlign = 'center'; g.fillStyle = '#a09d92'; g.font = F(500, 26); g.fillText('Selfie ao vivo em ' + (S.selfieAt || new Date()).toLocaleString('pt-BR') + ' · sujeito à aprovação', W / 2, 1420);
+  const blob = await new Promise(ok => cv.toBlob(ok, 'image/jpeg', 0.88));
+  if (S.cardURL) URL.revokeObjectURL(S.cardURL);
+  S.card = blob; S.cardURL = URL.createObjectURL(blob); return d;
+}
+function nomeArquivo(d) { return 'pedido-fbtx-' + d.nome.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30) + '.jpg'; }
+
+async function revisar() {
+  if (!validar()) return;
+  const bt = $('avanca2'); bt.disabled = true; bt.textContent = 'Montando…';
+  try {
+    const d = await montarCartao();
+    $('pre').src = S.cardURL; $('baixar').href = S.cardURL; $('baixar').download = nomeArquivo(d);
+    $('abrirZap').href = 'https://wa.me/' + CFG.whats + '?text=' + encodeURIComponent(textoMensagem());
+    $('status').innerHTML = ''; $('planoB').open = false; ir(3);
+  } catch (e) { erro('eFoto', null, 'Algo deu errado ao montar a imagem. Tire a selfie de novo.'); }
+  bt.disabled = false; bt.textContent = 'Revisar e enviar →';
+}
+function novoCodigo() {
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(6); crypto.getRandomValues(b);
+  return 'F-' + Array.from(b, x => A[x % A.length]).join('');
+}
+async function enviarAoCofre(d) {
+  const U = CFG.cofreUrl, K = CFG.cofreChave, H = { apikey: K, Authorization: 'Bearer ' + K };
+  if (!S.codigo) S.codigo = novoCodigo();
+  if (!S.subiu) {
+    const c = S.selfie, blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', 0.85));
+    const up = await fetch(U + '/storage/v1/object/selfies/' + S.codigo + '.jpg', { method: 'POST', headers: { ...H, 'Content-Type': 'image/jpeg', 'x-upsert': 'false' }, body: blob });
+    if (!up.ok && up.status !== 409) throw new Error('foto ' + up.status);
+    S.subiu = true;
+  }
+  if (!S.registrou) {
+    const c = d.c, r = await fetch(U + '/rest/v1/pedidos', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ codigo: S.codigo, modalidade: 'mensal', tipo: c.tipo, banco: d.banco || null, nome: d.nome, valor: c.v, parcelas: c.n, parcela: c.parcela, total: c.total, taxa: c.taxa, primeiro_venc: d.primeiro, selfie_path: S.codigo + '.jpg', selfie_em: (S.selfieAt || new Date()).toISOString() }) });
+    if (!r.ok && r.status !== 409) throw new Error('pedido ' + r.status);
+    S.registrou = true;
+  }
+}
+async function enviar() {
+  const st = $('status'), bt = $('enviar'), d = dadosPedido();
+  bt.disabled = true; bt.textContent = 'Enviando a selfie…'; st.innerHTML = '';
+  try {
+    await Promise.race([enviarAoCofre(d), new Promise((_, no) => setTimeout(() => no(new Error('tempo')), 25000))]);
+    const url = 'https://wa.me/' + CFG.whats + '?text=' + encodeURIComponent(textoMensagem());
+    $('abrirZap').href = url;
+    st.innerHTML = '<div class="aviso">✓ <b>Selfie enviada com sucesso</b> (código ' + S.codigo + '). Abrindo o WhatsApp com a mensagem pronta. Se não abrir, <a href="' + url + '" style="color:#ffd21f;font-weight:700">toque aqui</a>. Depois é só tocar em <b>enviar</b>.</div>';
+    bt.textContent = 'Abrir o WhatsApp de novo'; bt.disabled = false; bt.onclick = () => { location.href = url; };
+    setTimeout(() => { location.href = url; }, 900);
+    return;
+  } catch (e) {
+    bt.disabled = false; bt.textContent = 'Tentar enviar de novo';
+    st.innerHTML = '<div class="aviso warn">Não consegui enviar a selfie agora (verifique a internet). Toque em <b>Tentar enviar de novo</b>. Se não funcionar, use o caminho abaixo.</div>';
+    $('planoB').open = true;
+  }
+}
+async function enviarPeloCompartilhar() {
+  const st = $('status'), texto = textoMensagem(), d = dadosPedido();
+  try { await navigator.clipboard.writeText(texto); } catch (e) {}
+  const file = new File([S.card], nomeArquivo(d), { type: 'image/jpeg' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], text: texto, title: 'Solicitação de empréstimo' });
+      st.innerHTML = '<div class="aviso">A tela de compartilhamento foi aberta. Escolha o <b>WhatsApp</b>, depois o contato <b>' + CFG.whatsFmt + '</b> e toque em enviar. Se a foto aparecer sem texto, cole a mensagem: ela já foi copiada.</div>';
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') { st.innerHTML = '<div class="aviso warn">Envio cancelado. Toque de novo no botão quando quiser enviar.</div>'; return; }
+    }
+  }
+  $('planoB').open = true;
+  st.innerHTML = '<div class="aviso warn">Este aparelho não consegue enviar a foto junto sozinho. Use os dois passos abaixo: salvar a foto e abrir o WhatsApp com a mensagem pronta.</div>';
+  $('planoB').scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+
+/* ---------- ligações ---------- */
+montarControles(); desenhar();
+$('zapTop').href = 'https://wa.me/' + CFG.whats; $('numTxt').textContent = CFG.whatsFmt; $('numRod').textContent = CFG.whatsFmt;
+$('avanca1').addEventListener('click', () => { const c = calc(S.valor, S.n, S.tipo); $('e2valor').textContent = BRL(c.v); $('e2plano').textContent = c.n + 'x mensais' + (c.tipo === 'so_juros' ? ' (só juros + quitação final)' : ''); ir(2); });
+$('volta2').addEventListener('click', () => ir(1));
+$('volta3').addEventListener('click', () => ir(2));
+$('avanca2').addEventListener('click', revisar);
+$('enviar').addEventListener('click', () => { if ($('enviar').onclick) return; enviar(); });
+</script>
+</body>
+</html>
