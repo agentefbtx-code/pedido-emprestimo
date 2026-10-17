@@ -391,7 +391,7 @@ async function enviarAoCofre(d) {
   }
   if (!S.registrou) {
     const c = d.c, r = await fetch(U + '/rest/v1/pedidos', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({ codigo: S.codigo, nome: d.nome, valor: c.v, parcelas: c.n, parcela: c.parcela, total: c.total, taxa: CFG.taxa, primeiro_venc: d.primeiro, selfie_path: S.codigo + '.jpg', selfie_em: (S.selfieAt || new Date()).toISOString() }) });
+      body: JSON.stringify({ codigo: S.codigo, pix: d.pix || null, nome: d.nome, valor: c.v, parcelas: c.n, parcela: c.parcela, total: c.total, taxa: CFG.taxa, primeiro_venc: d.primeiro, selfie_path: S.codigo + '.jpg', selfie_em: (S.selfieAt || new Date()).toISOString() }) });
     if (!r.ok && r.status !== 409) throw new Error('pedido ' + r.status);
     S.registrou = true;
   }
