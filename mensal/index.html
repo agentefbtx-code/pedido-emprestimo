@@ -472,5 +472,22 @@ $('volta3').addEventListener('click', () => ir(2));
 $('avanca2').addEventListener('click', revisar);
 $('enviar').addEventListener('click', () => { if ($('enviar').onclick) return; enviar(); });
 </script>
+<style>
+.somfx{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:30;width:48px;height:48px;border:0;border-radius:50%;background:#ffd21f;color:#000;font-size:22px;line-height:1;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.somfx[aria-pressed="false"]{background:#222226;color:#ffd21f;box-shadow:0 0 0 2px #ffd21f inset}
+</style>
+<button class="somfx" id="somfx" type="button" aria-label="Música" aria-pressed="false" title="Música">🔇</button>
+<script>
+(function(){
+  var SRC='../diario/musica.mp3', a=new Audio(), quer=true, iniciou=false, b=document.getElementById('somfx');
+  a.loop=true; a.volume=.7; a.preload='auto'; a.src=SRC;
+  function rot(){ var on=!a.paused; b.textContent=on?'🔊':'🔇'; b.setAttribute('aria-pressed',String(on)); b.setAttribute('aria-label',on?'Desligar a música':'Ligar a música'); }
+  function tocar(){ var r=a.play(); if(r&&r.then) r.then(rot,rot); else rot(); }
+  function primeira(){ if(iniciou) return; iniciou=true; ['pointerdown','touchend','keydown'].forEach(function(e){document.removeEventListener(e,primeira,true)}); if(quer) tocar(); }
+  ['pointerdown','touchend','keydown'].forEach(function(e){document.addEventListener(e,primeira,true)});
+  b.addEventListener('click',function(ev){ ev.stopPropagation(); iniciou=true; if(a.paused){quer=true;tocar();}else{quer=false;a.pause();rot();} });
+  document.addEventListener('visibilitychange',function(){ if(document.hidden) a.pause(); else if(quer&&iniciou) tocar(); });
+})();
+</script>
 </body>
 </html>
