@@ -206,7 +206,7 @@ a.sec{display:grid;place-items:center;text-decoration:none;min-height:48px;borde
       </div>
       <div class="two">
         <div class="field"><label for="pix">Chave Pix para receber o crédito</label><input type="text" id="pix" autocomplete="off" placeholder="CPF, e-mail, telefone ou aleatória"><p class="err" id="ePix"></p></div>
-        <div class="field"><label for="banco">Nome do banco</label><input type="text" id="banco" autocomplete="off" placeholder="Ex.: Nubank, Itaú, Bradesco"><p class="err" id="eBanco"></p></div>
+        <div class="field"><label for="banco">Banco da chave Pix</label><input type="text" id="banco" autocomplete="off" placeholder="Ex.: Nubank, Itaú, Bradesco"><p class="err" id="eBanco"></p></div>
       </div>
     </div>
 
@@ -363,6 +363,7 @@ function validar() {
   marca(erro('eCpf', 'cpf', cpfOk($('cpf').value) ? '' : 'CPF inválido. Confira os números.'), 'cpf');
   const z = soNum($('zap').value); marca(erro('eZap', 'zap', (z.length === 11 || z.length === 10) ? '' : 'Digite o DDD e o número.'), 'zap');
   marca(erro('ePix', 'pix', $('pix').value.trim().length >= 5 ? '' : 'Digite a chave Pix.'), 'pix');
+  marca(erro('eBanco', 'banco', $('banco').value.trim().length >= 2 ? '' : 'Informe o banco da chave Pix.'), 'banco');
   marca(erro('eFoto', null, S.selfie && $('shot').dataset.modo === 'feito' ? '' : 'Tire a selfie ao vivo para continuar.'), 'shot');
   marca(erro('eOk', null, $('ok').checked ? '' : 'Marque a confirmação para continuar.'), 'ok');
   if (primeiro) $(primeiro).scrollIntoView({ block: 'center', behavior: 'smooth' });
