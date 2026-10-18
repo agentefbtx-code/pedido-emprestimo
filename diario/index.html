@@ -291,7 +291,13 @@ audio.addEventListener('error', () => {
 audio.src = MUS;
 function rotuloSom() { $('som').textContent = audio.paused ? '♪ Música desligada' : '♪ Música ligada'; }
 function tocar() { querMusica = true; $('som').hidden = false; const r = audio.play(); if (r && r.then) r.then(rotuloSom, () => { querMusica = false; rotuloSom(); }); else rotuloSom(); }
-$('som').addEventListener('click', () => { if (audio.paused) tocar(); else { querMusica = false; audio.pause(); rotuloSom(); } });
+let mudo = false, iniciouSom = false;
+$('som').addEventListener('click', () => { iniciouSom = true; if (audio.paused) { mudo = false; tocar(); } else { mudo = true; querMusica = false; audio.pause(); rotuloSom(); } });
+$('som').hidden = false; rotuloSom();
+const EVS = ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'];
+function primeiraSom(ev) { if (iniciouSom) return; if (ev && ev.target && ev.target.closest && ev.target.closest('#som')) return; iniciouSom = true; EVS.forEach(e => document.removeEventListener(e, primeiraSom, true)); if (!mudo && audio.paused) tocar(); }
+EVS.forEach(e => document.addEventListener(e, primeiraSom, true));
+try { const p0 = audio.play(); if (p0 && p0.then) p0.then(() => { querMusica = true; iniciouSom = true; EVS.forEach(e => document.removeEventListener(e, primeiraSom, true)); rotuloSom(); }, () => {}); } catch (x) {}
 document.addEventListener('visibilitychange', () => { if (document.hidden) audio.pause(); else if (querMusica) audio.play().then(rotuloSom, rotuloSom); });
 
 /* ---------- cálculo ---------- */
@@ -513,7 +519,7 @@ async function enviarPeloCompartilhar() {
 document.querySelectorAll('#logoTopo,#logoCapa').forEach(i => { i.src = LOGO; });
 montarControles(); desenhar();
 $('zapTop').href = 'https://wa.me/' + CFG.whats; $('numTxt').textContent = CFG.whatsFmt; $('numRod').textContent = CFG.whatsFmt;
-$('start').addEventListener('click', () => { ir(1); tocar(); });
+$('start').addEventListener('click', () => { ir(1); if (!mudo) tocar(); });
 $('home').addEventListener('click', () => ir(0));
 $('avanca1').addEventListener('click', () => { const c = calc(S.valor, S.dias); $('e2valor').textContent = BRL(c.v); $('e2plano').textContent = c.n + ' dias (' + c.venc + ') · total ' + BRL(c.total); ir(2); });
 $('volta2').addEventListener('click', () => ir(1));
